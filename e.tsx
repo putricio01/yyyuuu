@@ -238,9 +238,10 @@ interface LandingPageProps {
 	darkMode: boolean;
 	setShowLoginModal: (show: boolean) => void;
 	setIsSignUp: (isSignUp: boolean) => void;
+	user: User | null;
 }
 
-const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp }: LandingPageProps) => (
+const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: LandingPageProps) => (
 	<div className="min-h-screen">
 		<section className="relative overflow-hidden py-24 px-4 min-h-[90vh] flex items-center">
 			{/* Background gradient effects */}
@@ -306,7 +307,7 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp }: LandingPagePr
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.8, delay: 0.8 }}
 					className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16"
-				>
+				>                                   {!user && (
 					<motion.button
 						className={`group relative px-10 py-4 ${
 							darkMode 
@@ -341,7 +342,9 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp }: LandingPagePr
 								: 'bg-[#2E6F40]'
 							} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
 					</motion.button>
+        )}
 
+		{!user && (
 					<motion.button
 						className={`group px-10 py-4 rounded-xl font-semibold text-lg border-2 transition-all duration-300 hover:-translate-y-1 ${
 							darkMode 
@@ -360,8 +363,9 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp }: LandingPagePr
 							Sign In
 						</span>
 					</motion.button>
+					)}
 				</motion.div>
-
+			)}
 				{/* Stats section */}
 				<motion.div
 					initial={{ opacity: 0, y: 30 }}
@@ -488,7 +492,8 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp }: LandingPagePr
 			</div>
 		</section>
 
-		<section className="py-20 px-4">
+		  {false && (
+                <section className="py-20 px-4">
 			<div className="max-w-6xl mx-auto">
 				<div className="grid md:grid-cols-2 gap-12 items-center">
 					<motion.div
@@ -554,7 +559,8 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp }: LandingPagePr
 					</motion.div>
 				</div>
 			</div>
-		</section>
+		 </section>
+                )}
 	</div>
 );
 
@@ -769,11 +775,13 @@ export default function LearningAnalyticsDashboard() {
 			const userData = { email, name: email.split('@')[0] };
 			setUser(userData);
 			localStorage.setItem('eduanalytics_user', JSON.stringify(userData));
+			setShowLandingPage(false);
+			setCurrentView('dashboard');
 			setShowLoginModal(false);
 			setEmail('');
 			setPassword('');
 			addNotification('Successfully logged in!', 'success');
-		} else {
+	} else {
 			addNotification('Invalid email or password.', 'error');
 		}
 	};
@@ -804,13 +812,15 @@ export default function LearningAnalyticsDashboard() {
 			return;
 		}
 
-		const userData = { email, name: email.split('@')[0] };
-		storeNewUser(email, password, userData.name);
-		setUser(userData);
-		localStorage.setItem('eduanalytics_user', JSON.stringify(userData));
-		setShowLoginModal(false);
-		setEmail('');
-		setPassword('');
+				const userData = { email, name: email.split('@')[0] };
+                storeNewUser(email, password, userData.name);
+                setUser(userData);
+                localStorage.setItem('eduanalytics_user', JSON.stringify(userData));
+                setShowLandingPage(false);
+                setCurrentView('dashboard');
+                setShowLoginModal(false);
+                setEmail('');
+                setPassword('');
 		setConfirmPassword('');
 		addNotification('Account created successfully!', 'success');
 	};
@@ -1146,7 +1156,7 @@ export default function LearningAnalyticsDashboard() {
 					initial={{ scale: 0.9 }}
 					animate={{ scale: 1 }}
 					exit={{ scale: 0.9 }}
-					className={`${darkMode ? 'bg-gray-900' : 'bg-white'} border rounded-xl p-6 w-full max-w-md mx-4 shadow-xl`}
+					className={`${darkMode ? 'bg-gray-900' : 'bg-white'} border rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto mx-4 shadow-xl`}
 					style={{
 						borderColor: darkMode ? '#B4B1B1' : '#E5E7EB',
 						boxShadow: darkMode ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.1)'
@@ -2020,11 +2030,12 @@ export default function LearningAnalyticsDashboard() {
 			</nav>
 
 			{showLandingPage ? (
-				<LandingPage 
+				    <LandingPage
 					darkMode={darkMode}
 					setShowLoginModal={setShowLoginModal}
 					setIsSignUp={setIsSignUp}
-				/>
+					user={user}
+			/>
 			) : (
 			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				{currentView === 'dashboard' && (
@@ -2157,7 +2168,7 @@ export default function LearningAnalyticsDashboard() {
 											<div className="flex justify-between items-center">
 												<span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completion Time:</span>
 												<span className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-													 {userAnalytics[selectedNode].analytics.completionTime} mins
+												{userAnalytics[selectedNode].analytics.completionTime}<span className="ml-1">mins</span>
 												</span>
 											</div>
 											<div className="flex justify-between items-center">
