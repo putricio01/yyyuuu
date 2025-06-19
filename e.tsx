@@ -243,32 +243,43 @@ import {
       setIsFilePlaying(false);
     }, [audioContext, source, analyser, stream, audioFileUrl]);
 
+    const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+
     const handleAudioFile = useCallback(
       async (file: File) => {
         const audioEl = audioElementRef.current;
         if (!audioEl) return;
 
-        if (audioContext) {
+        if (stream) {
           handleStopAudio();
+        } else {
+          audioEl.pause();
+          if (audioFileUrl) {
+            URL.revokeObjectURL(audioFileUrl);
+          }
+          setIsFilePlaying(false);
         }
 
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const src = ctx.createMediaElementSource(audioEl);
-        const an = ctx.createAnalyser();
-        an.fftSize = 128;
-        src.connect(an);
-        an.connect(ctx.destination);
+        let ctx = audioContext;
+        let an = analyser;
+        if (!ctx) {
+          ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const srcNode = ctx.createMediaElementSource(audioEl);
+          sourceNodeRef.current = srcNode;
+          an = ctx.createAnalyser();
+          an.fftSize = 128;
+          srcNode.connect(an);
+          an.connect(ctx.destination);
+          setAudioContext(ctx);
+          setAnalyser(an);
+        }
 
         const url = URL.createObjectURL(file);
         audioEl.src = url;
+        audioEl.load();
         setAudioFileUrl(url);
-
-        setAudioContext(ctx);
-        setSource(null as any);
-        setAnalyser(an);
-        setIsFilePlaying(false);
       },
-      [audioContext, handleStopAudio]
+      [audioContext, analyser, stream, audioFileUrl, handleStopAudio]
     );
   
     // Canvas Drawing Logic
@@ -568,6 +579,8 @@ import {
                   if (file) {
                     handleAudioFile(file);
                   }
+                  // reset value so the same file can be selected again
+                  e.currentTarget.value = "";
                 }}
                 className="hidden"
               />
