@@ -1,12 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
-    useCallback,
-    useEffect,
-    useLayoutEffect,
-    useRef,
-    useState,
-  } from "react";
-  import { Camera, Image, Download } from "lucide-react";
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  Camera,
+  Image,
+  Download,
+  Upload,
+  Play,
+  Pause,
+} from "lucide-react";
   
   const ZESTY_COLORS = {
     background: "#FFFDE7",
@@ -112,9 +119,11 @@ import React, {
   const AudioWallpaperApp: React.FC = () => {
     // Canvas sizing
     const containerRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [canvasSize, setCanvasSize] = useState({ width: 960, height: 540 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioElementRef = useRef<HTMLAudioElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 960, height: 540 });
   
     // Audio
     const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
@@ -131,6 +140,8 @@ import React, {
     const [isAudioActive, setIsAudioActive] = useState(false);
     const [pipSupported, setPipSupported] = useState(false);
     const [pipMode, setPipMode] = useState(false);
+    const [audioFileUrl, setAudioFileUrl] = useState<string | null>(null);
+    const [isFilePlaying, setIsFilePlaying] = useState(false);
   
     // Responsive canvas
     const updateCanvasSize = useCallback(() => {
@@ -159,11 +170,11 @@ import React, {
       );
     }, [canvasSize]);
   
-    // Audio Analysis Loop
-    useEffect(() => {
-      let animationFrame: number;
-      if (analyser && isAudioActive) {
-        const freqArray = new Uint8Array(analyser.frequencyBinCount);
+  // Audio Analysis Loop
+  useEffect(() => {
+    let animationFrame: number;
+    if (analyser && (isAudioActive || isFilePlaying)) {
+      const freqArray = new Uint8Array(analyser.frequencyBinCount);
   
         const analyze = () => {
           analyser.getByteFrequencyData(freqArray);
@@ -177,7 +188,7 @@ import React, {
         analyze();
       }
       return () => cancelAnimationFrame(animationFrame);
-    }, [analyser, isAudioActive]);
+    }, [analyser, isAudioActive, isFilePlaying]);
   
     // Audio setup
     const handleAudio = useCallback(async () => {
@@ -222,7 +233,43 @@ import React, {
       }
   
       setIsAudioActive(false);
-    }, [audioContext, source, analyser, stream]);
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+      }
+      if (audioFileUrl) {
+        URL.revokeObjectURL(audioFileUrl);
+        setAudioFileUrl(null);
+      }
+      setIsFilePlaying(false);
+    }, [audioContext, source, analyser, stream, audioFileUrl]);
+
+    const handleAudioFile = useCallback(
+      async (file: File) => {
+        const audioEl = audioElementRef.current;
+        if (!audioEl) return;
+
+        if (audioContext) {
+          handleStopAudio();
+        }
+
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const src = ctx.createMediaElementSource(audioEl);
+        const an = ctx.createAnalyser();
+        an.fftSize = 128;
+        src.connect(an);
+        an.connect(ctx.destination);
+
+        const url = URL.createObjectURL(file);
+        audioEl.src = url;
+        setAudioFileUrl(url);
+
+        setAudioContext(ctx);
+        setSource(null as any);
+        setAnalyser(an);
+        setIsFilePlaying(false);
+      },
+      [audioContext, handleStopAudio]
+    );
   
     // Canvas Drawing Logic
     useEffect(() => {
@@ -399,6 +446,18 @@ import React, {
   
       URL.revokeObjectURL(url);
     }, [shapes]);
+
+    const handlePlayPause = useCallback(() => {
+      const audioEl = audioElementRef.current;
+      if (!audioEl) return;
+      if (audioEl.paused) {
+        audioEl.play();
+        setIsFilePlaying(true);
+      } else {
+        audioEl.pause();
+        setIsFilePlaying(false);
+      }
+    }, []);
   
     useEffect(() => {
       // Fonts preconnect
@@ -438,6 +497,27 @@ import React, {
         `;
       document.head.appendChild(style);
     }, []);
+
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      const handleDragOver = (e: DragEvent) => {
+        e.preventDefault();
+      };
+      const handleDrop = (e: DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer?.files[0];
+        if (file && file.type.startsWith("audio/")) {
+          handleAudioFile(file);
+        }
+      };
+      container.addEventListener("dragover", handleDragOver);
+      container.addEventListener("drop", handleDrop);
+      return () => {
+        container.removeEventListener("dragover", handleDragOver);
+        container.removeEventListener("drop", handleDrop);
+      };
+    }, [handleAudioFile]);
   
     return (
       <main className="h-screen bg-[linear-gradient(to_top,_black,_#c7e959_100%,_#c7e959)] w-full flex items-center justify-center p-6">
@@ -464,6 +544,33 @@ import React, {
                 {isAudioActive && <PulseBar />}
                 <span>{isAudioActive ? "Stop Audio" : "Start Audio"}</span>
               </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="cursor-pointer hover:opacity-70 active:opacity-70 transition bg-[#c7e959] p-3 px-6 rounded text-[#06080a] font-normal flex items-center mt-3"
+              >
+                <Upload className="mr-2" /> Import Audio
+              </button>
+              {audioFileUrl && (
+                <button
+                  onClick={handlePlayPause}
+                  className="cursor-pointer hover:opacity-70 active:opacity-70 transition bg-[#c7e959] p-3 px-6 rounded text-[#06080a] font-normal flex items-center mt-3"
+                >
+                  {isFilePlaying ? <Pause className="mr-2" /> : <Play className="mr-2" />}
+                  {isFilePlaying ? "Pause" : "Play"}
+                </button>
+              )}
+              <input
+                type="file"
+                accept="audio/*"
+                ref={fileInputRef}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleAudioFile(file);
+                  }
+                }}
+                className="hidden"
+              />
             </div>
           </div>
   
@@ -513,6 +620,7 @@ import React, {
           </div>
   
           <video ref={videoRef} className="hidden" />
+          <audio ref={audioElementRef} className="hidden" />
         </div>
       </main>
     );
