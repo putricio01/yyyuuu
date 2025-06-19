@@ -123,6 +123,8 @@ import React, {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const audioElementRef = useRef<HTMLAudioElement>(null);
+	const mediaElementSourceRef =
+	  useRef<MediaElementAudioSourceNode | null>(null);
 	const [canvasSize, setCanvasSize] = useState({ width: 960, height: 540 });
 	
 	  // Audio
@@ -147,8 +149,8 @@ import React, {
 	  const updateCanvasSize = useCallback(() => {
 		const container = containerRef.current;
 		if (!container) return;
-		const height = container.offsetHeight;
-		const width = Math.round(height * ASPECT_RATIO);
+		const width = container.offsetWidth;
+		const height = Math.round(width / ASPECT_RATIO);
 		setCanvasSize({ width, height });
 	  }, []);
 	
@@ -216,6 +218,11 @@ import React, {
 		  audioContext.close();
 		  setAudioContext(null);
 		}
+  
+		if (mediaElementSourceRef.current) {
+		  mediaElementSourceRef.current.disconnect();
+		  mediaElementSourceRef.current = null;
+		}
 	
 		if (source) {
 		  source.disconnect();
@@ -248,27 +255,39 @@ import React, {
 		  const audioEl = audioElementRef.current;
 		  if (!audioEl) return;
   
-		  if (audioContext) {
+		  if (isAudioActive) {
 			handleStopAudio();
 		  }
   
-		  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-		  const src = ctx.createMediaElementSource(audioEl);
-		  const an = ctx.createAnalyser();
-		  an.fftSize = 128;
-		  src.connect(an);
-		  an.connect(ctx.destination);
+		  let ctx = audioContext;
+		  let an = analyser;
+  
+		  if (!ctx || !mediaElementSourceRef.current) {
+			ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+			const src = ctx.createMediaElementSource(audioEl);
+			an = ctx.createAnalyser();
+			an.fftSize = 128;
+			src.connect(an);
+			an.connect(ctx.destination);
+  
+			setAudioContext(ctx);
+			setAnalyser(an);
+			setSource(null);
+			mediaElementSourceRef.current = src;
+		  } else {
+			audioEl.pause();
+		  }
+  
+		  if (audioFileUrl) {
+			URL.revokeObjectURL(audioFileUrl);
+		  }
   
 		  const url = URL.createObjectURL(file);
 		  audioEl.src = url;
 		  setAudioFileUrl(url);
-  
-		  setAudioContext(ctx);
-		  setSource(null as any);
-		  setAnalyser(an);
 		  setIsFilePlaying(false);
 		},
-		[audioContext, handleStopAudio]
+		[audioContext, analyser, audioFileUrl, isAudioActive, handleStopAudio]
 	  );
 	
 	  // Canvas Drawing Logic
@@ -522,14 +541,14 @@ import React, {
 	  return (
 		<main className="h-screen bg-[linear-gradient(to_top,_black,_#c7e959_100%,_#c7e959)] w-full flex items-center justify-center p-6">
 		  <div className="bg-[#06080a] w-full max-w-[1200px] h-[90%] rounded-2xl flex overflow-hidden flex-col lg:flex-row">
-			<div className="lg:flex-1 p-6 text-white flex flex-col justify-center lg:max-w-[545px] mx-auto overflow-auto">
-			  <div className="my-6 space-y-4 w-full">
-				<h1 className="text-5xl font-semibold leading-12">
+		  <div className="lg:w-[27%] p-4 text-white flex flex-col justify-center lg:max-w-[27%] mx-auto overflow-auto">
+			  <div className="my-4 space-y-3 w-full">
+			   <h1 className="text-[1.74rem] font-semibold leading-[1.74rem]">
 				  Generate <br /> geometric,{" "}
 				  <span className="text-[#c7e959]">lemon-zest</span>{" "}
 				  <span className="text-white/70">visualizations </span>
 				</h1>
-				<p className="text-sm text-white/70">
+				<p className="text-xs text-white/70">
 				  Plug in your sound, watch shapes float and backgrounds dance
 				</p>
 			  </div>
@@ -576,7 +595,7 @@ import React, {
 	
 			<div
 			  ref={containerRef}
-			  className="w-full lg:w-6/12 bg-[#c7e959]/40 relative min-h-[200px]"
+			  className="w-full lg:w-[73%] bg-[#c7e959]/40 relative min-h-[200px]"
 			>
 			  <canvas
 				ref={canvasRef}
@@ -626,3 +645,5 @@ import React, {
 	  );
 	};
 	export default AudioWallpaperApp;
+  
+  
