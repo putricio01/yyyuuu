@@ -692,4 +692,3 @@ useEffect(() => {
   );
 };
 export default AudioWallpaperApp;
-
