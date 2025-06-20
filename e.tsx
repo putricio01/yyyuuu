@@ -29,6 +29,7 @@ import React, {
 	};
 	
 	const ASPECT_RATIO = 16 / 9;
+	 
 	
 	function getRandomInt(min: number, max: number) {
 	  return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -147,12 +148,12 @@ import React, {
 	
 	  // Responsive canvas
 	  const updateCanvasSize = useCallback(() => {
-		const container = containerRef.current;
-		if (!container) return;
-		const width = container.offsetWidth;
-		const height = Math.round(width / ASPECT_RATIO);
-		setCanvasSize({ width, height });
-	  }, []);
+		  const container = containerRef.current;
+		  if (!container) return;
+		  const width = container.offsetWidth;
+		  const height = Math.round(width / ASPECT_RATIO);
+		  setCanvasSize({ width, height });
+		}, []);
 	
 	  useLayoutEffect(() => {
 		updateCanvasSize();
@@ -594,20 +595,22 @@ import React, {
 			</div>
 	
 			<div
-			  ref={containerRef}
-			  className="w-full lg:w-[73%] bg-[#c7e959]/40 relative min-h-[200px]"
-			>
-			  <canvas
-				ref={canvasRef}
-				width={canvasSize.width}
-				height={canvasSize.height}
-				style={{
-				  width: canvasSize.width,
-				  height: canvasSize.height,
-				  display: "block",
-				  transition: "box-shadow 0.18s",
-				}}
-			  />
+				ref={containerRef}
+				className="w-full lg:w-[73%] bg-[#c7e959]/40 relative min-h-[200px]"
+			  >
+				  <canvas
+								  ref={canvasRef}
+								  width={canvasSize.width}
+								  height={canvasSize.height}
+								  style={{
+									width: canvasSize.width,
+									height: canvasSize.height,
+									display: "block",
+									transition: "box-shadow 0.18s",
+									transform: "scale(0.7)",
+									transformOrigin: "top left",
+								  }}
+							/>
 			  <div className="absolute bottom-0 left-0 w-full flex p-6 font-normal justify-evenly gap-4 bg-[linear-gradient(to_top,_#c7e959_0%,_#c7e959_0%,_transparent_120%)]">
 				<button
 				  onClick={handleScreenshot}
