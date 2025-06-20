@@ -584,12 +584,352 @@ const footerSections = {
 		{ name: 'Support', url: '#' },
 		{ name: 'API', url: '#' }
 	],
-	'Legal': [
-		{ name: 'Privacy', url: '#' },
-		{ name: 'Terms', url: '#' },
-		{ name: 'Security', url: '#' },
-		{ name: 'Compliance', url: '#' }
-	]
+        'Legal': [
+                { name: 'Privacy', url: '#' },
+                { name: 'Terms', url: '#' },
+                { name: 'Security', url: '#' },
+                { name: 'Compliance', url: '#' }
+        ]
+};
+
+interface CourseFormProps {
+    darkMode: boolean;
+    course?: Course;
+    onSubmit: (data: Omit<Course, 'id' | 'createdAt' | 'updatedAt'> | Course) => void;
+    onCancel: () => void;
+}
+
+const CourseForm: React.FC<CourseFormProps> = ({ darkMode, course, onSubmit, onCancel }) => {
+    const [formData, setFormData] = useState({
+        title: course?.title || '',
+        description: course?.description || '',
+        category: course?.category || '',
+        difficulty: course?.difficulty || 'Beginner' as const,
+        duration: course?.duration || 0,
+        instructor: course?.instructor || '',
+        enrollments: course?.enrollments || 0,
+        rating: course?.rating || 0
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (course) {
+            onSubmit({ ...course, ...formData });
+        } else {
+            onSubmit(formData);
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={onCancel}
+        >
+            <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+                className={`${darkMode ? 'bg-gray-900' : 'bg-white'} border rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto mx-4 shadow-xl`}
+                style={{
+                    borderColor: darkMode ? '#B4B1B1' : '#E5E7EB',
+                    boxShadow: darkMode ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.1)'
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {course ? 'Edit Course' : 'Create New Course'}
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Title</label>
+                        <input
+                            type="text"
+                            value={formData.title}
+                            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                            className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Description</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                            className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                            rows={3}
+                            required
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Category</label>
+                            <input
+                                type="text"
+                                value={formData.category}
+                                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Difficulty</label>
+                            <select
+                                value={formData.difficulty}
+                                onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced' }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                            >
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Duration (minutes)</label>
+                            <input
+                                type="number"
+                                value={formData.duration}
+                                onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Rating (0-5)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="5"
+                                value={formData.rating}
+                                onChange={(e) => setFormData(prev => ({ ...prev, rating: parseFloat(e.target.value) }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Instructor</label>
+                        <input
+                            type="text"
+                            value={formData.instructor}
+                            onChange={(e) => setFormData(prev => ({ ...prev, instructor: e.target.value }))}
+                            className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Enrollments</label>
+                        <input
+                            type="number"
+                            value={formData.enrollments}
+                            onChange={(e) => setFormData(prev => ({ ...prev, enrollments: parseInt(e.target.value) }))}
+                            className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                            required
+                        />
+                    </div>
+                    <div className="flex space-x-3 pt-4">
+                        <motion.button
+                            type="submit"
+                            className={`cursor-pointer flex-1 ${darkMode ? 'bg-gradient-to-br from-[#58CC02] to-[#89E219]' : 'bg-[#2E6F40]'} text-white py-2 px-4 rounded-lg font-medium`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            {course ? 'Update' : 'Create'}
+                        </motion.button>
+                        <motion.button
+                            type="button"
+                            onClick={onCancel}
+                            className={`cursor-pointer flex-1 py-2 px-4 rounded-lg font-medium border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            Cancel
+                        </motion.button>
+                    </div>
+                </form>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+interface AnalyticsFormProps {
+    darkMode: boolean;
+    courses: Course[];
+    analytics?: AnalyticsRecord;
+    onSubmit: (data: Omit<AnalyticsRecord, 'id'> | AnalyticsRecord) => void;
+    onCancel: () => void;
+}
+
+const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analytics, onSubmit, onCancel }) => {
+    const [formData, setFormData] = useState({
+        courseId: analytics?.courseId || '',
+        studentId: analytics?.studentId || '',
+        studentName: analytics?.studentName || '',
+        completionRate: analytics?.completionRate || 0,
+        timeSpent: analytics?.timeSpent || 0,
+        score: analytics?.score || 0,
+        lastAccessed: analytics?.lastAccessed || new Date(),
+        attempts: analytics?.attempts || 1,
+        status: analytics?.status || 'not-started' as const
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (analytics) {
+            onSubmit({ ...analytics, ...formData });
+        } else {
+            onSubmit(formData);
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={onCancel}
+        >
+            <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+                className={`${darkMode ? 'bg-gray-900' : 'bg-white'} border rounded-xl p-6 w-full max-w-md mx-4 shadow-xl`}
+                style={{
+                    borderColor: darkMode ? '#B4B1B1' : '#E5E7EB',
+                    boxShadow: darkMode ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.1)'
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {analytics ? 'Edit Analytics Record' : 'Create New Analytics Record'}
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Course</label>
+                        <select
+                            value={formData.courseId}
+                            onChange={(e) => setFormData(prev => ({ ...prev, courseId: e.target.value }))}
+                            className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                            required
+                        >
+                            <option value="">Select a course</option>
+                            {courses.map(course => (
+                                <option key={course.id} value={course.id}>{course.title}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Student ID</label>
+                            <input
+                                type="text"
+                                value={formData.studentId}
+                                onChange={(e) => setFormData(prev => ({ ...prev, studentId: e.target.value }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Student Name</label>
+                            <input
+                                type="text"
+                                value={formData.studentName}
+                                onChange={(e) => setFormData(prev => ({ ...prev, studentName: e.target.value }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Completion Rate (%)</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={formData.completionRate}
+                                onChange={(e) => setFormData(prev => ({ ...prev, completionRate: parseInt(e.target.value) }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Time Spent (minutes)</label>
+                            <input
+                                type="number"
+                                value={formData.timeSpent}
+                                onChange={(e) => setFormData(prev => ({ ...prev, timeSpent: parseInt(e.target.value) }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Score (%)</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={formData.score}
+                                onChange={(e) => setFormData(prev => ({ ...prev, score: parseInt(e.target.value) }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Attempts</label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={formData.attempts}
+                                onChange={(e) => setFormData(prev => ({ ...prev, attempts: parseInt(e.target.value) }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status</label>
+                        <select
+                            value={formData.status}
+                            onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'completed' | 'in-progress' | 'not-started' }))}
+                            className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        >
+                            <option value="not-started">Not Started</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div className="flex space-x-3 pt-4">
+                        <motion.button
+                            type="submit"
+                            className={`cursor-pointer flex-1 ${darkMode ? 'bg-gradient-to-br from-[#58CC02] to-[#89E219]' : 'bg-[#2E6F40]'} text-white py-2 px-4 rounded-lg font-medium`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            {analytics ? 'Update' : 'Create'}
+                        </motion.button>
+                        <motion.button
+                            type="button"
+                            onClick={onCancel}
+                            className={`cursor-pointer flex-1 py-2 px-4 rounded-lg font-medium border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            Cancel
+                        </motion.button>
+                    </div>
+                </form>
+            </motion.div>
+        </motion.div>
+    );
 };
 
 export default function LearningAnalyticsDashboard() {
@@ -1118,380 +1458,6 @@ export default function LearningAnalyticsDashboard() {
 		addNotification('Analytics record deleted successfully!', 'success');
 	};
 
-	// Course Form Component
-	const CourseForm = ({ course, onSubmit, onCancel }: {
-		course?: Course;
-		onSubmit: (data: Omit<Course, 'id' | 'createdAt' | 'updatedAt'> | Course) => void;
-		onCancel: () => void;
-	}) => {
-		const [formData, setFormData] = useState({
-			title: course?.title || '',
-			description: course?.description || '',
-			category: course?.category || '',
-			difficulty: course?.difficulty || 'Beginner' as const,
-			duration: course?.duration || 0,
-			instructor: course?.instructor || '',
-			enrollments: course?.enrollments || 0,
-			rating: course?.rating || 0
-		});
-
-		const handleSubmit = (e: React.FormEvent) => {
-			e.preventDefault();
-			if (course) {
-				onSubmit({ ...course, ...formData });
-			} else {
-				onSubmit(formData);
-			}
-		};
-
-		return (
-			<motion.div
-				initial={{ opacity: 0 }}
-				animate={{ opacity: 1 }}
-				exit={{ opacity: 0 }}
-				className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-				onClick={onCancel}
-			>
-				<motion.div
-					initial={{ scale: 0.9 }}
-					animate={{ scale: 1 }}
-					exit={{ scale: 0.9 }}
-					className={`${darkMode ? 'bg-gray-900' : 'bg-white'} border rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto mx-4 shadow-xl`}
-					style={{
-						borderColor: darkMode ? '#B4B1B1' : '#E5E7EB',
-						boxShadow: darkMode ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.1)'
-					}}
-					onClick={(e) => e.stopPropagation()}
-				>
-					<h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-						{course ? 'Edit Course' : 'Create New Course'}
-					</h2>
-					<form onSubmit={handleSubmit} className="space-y-4">
-						<div>
-							<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-								Title
-							</label>
-							<input
-								type="text"
-								value={formData.title}
-								onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-								className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-								required
-							/>
-						</div>
-						<div>
-							<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-								Description
-							</label>
-							<textarea
-								value={formData.description}
-								onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-								className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-								rows={3}
-								required
-							/>
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Category
-								</label>
-								<input
-									type="text"
-									value={formData.category}
-									onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Difficulty
-								</label>
-								<select
-									value={formData.difficulty}
-									onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced' }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-								>
-									<option value="Beginner">Beginner</option>
-									<option value="Intermediate">Intermediate</option>
-									<option value="Advanced">Advanced</option>
-								</select>
-							</div>
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Duration (minutes)
-								</label>
-								<input
-									type="number"
-									value={formData.duration}
-									onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Rating (0-5)
-								</label>
-								<input
-									type="number"
-									step="0.1"
-									min="0"
-									max="5"
-									value={formData.rating}
-									onChange={(e) => setFormData(prev => ({ ...prev, rating: parseFloat(e.target.value) }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-						</div>
-						<div>
-							<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-								Instructor
-							</label>
-							<input
-								type="text"
-								value={formData.instructor}
-								onChange={(e) => setFormData(prev => ({ ...prev, instructor: e.target.value }))}
-								className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-								required
-							/>
-						</div>
-						<div>
-							<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-								Enrollments
-							</label>
-							<input
-								type="number"
-								value={formData.enrollments}
-								onChange={(e) => setFormData(prev => ({ ...prev, enrollments: parseInt(e.target.value) }))}
-								className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-								required
-							/>
-						</div>
-						<div className="flex space-x-3 pt-4">
-							<motion.button
-								type="submit"
-								className={`cursor-pointer flex-1 ${
-									darkMode 
-										? 'bg-gradient-to-br from-[#58CC02] to-[#89E219]' 
-										: 'bg-[#2E6F40]'
-								} text-white py-2 px-4 rounded-lg font-medium`}
-								whileHover={{ scale: 1.02 }}
-								whileTap={{ scale: 0.98 }}
-							>
-								{course ? 'Update' : 'Create'}
-							</motion.button>
-							<motion.button
-								type="button"
-								onClick={onCancel}
-								className={`cursor-pointer flex-1 py-2 px-4 rounded-lg font-medium border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-								whileHover={{ scale: 1.02 }}
-								whileTap={{ scale: 0.98 }}
-							>
-								Cancel
-							</motion.button>
-						</div>
-					</form>
-				</motion.div>
-			</motion.div>
-		);
-	};
-
-	// Analytics Form Component
-	const AnalyticsForm = ({ analytics, onSubmit, onCancel }: {
-		analytics?: AnalyticsRecord;
-		onSubmit: (data: Omit<AnalyticsRecord, 'id'> | AnalyticsRecord) => void;
-		onCancel: () => void;
-	}) => {
-		const [formData, setFormData] = useState({
-			courseId: analytics?.courseId || '',
-			studentId: analytics?.studentId || '',
-			studentName: analytics?.studentName || '',
-			completionRate: analytics?.completionRate || 0,
-			timeSpent: analytics?.timeSpent || 0,
-			score: analytics?.score || 0,
-			lastAccessed: analytics?.lastAccessed || new Date(),
-			attempts: analytics?.attempts || 1,
-			status: analytics?.status || 'not-started' as const
-		});
-
-		const handleSubmit = (e: React.FormEvent) => {
-			e.preventDefault();
-			if (analytics) {
-				onSubmit({ ...analytics, ...formData });
-			} else {
-				onSubmit(formData);
-			}
-		};
-
-		return (
-			<motion.div
-				initial={{ opacity: 0 }}
-				animate={{ opacity: 1 }}
-				exit={{ opacity: 0 }}
-				className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-				onClick={onCancel}
-			>
-				<motion.div
-					initial={{ scale: 0.9 }}
-					animate={{ scale: 1 }}
-					exit={{ scale: 0.9 }}
-					className={`${darkMode ? 'bg-gray-900' : 'bg-white'} border rounded-xl p-6 w-full max-w-md mx-4 shadow-xl`}
-					style={{
-						borderColor: darkMode ? '#B4B1B1' : '#E5E7EB',
-						boxShadow: darkMode ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.1)'
-					}}
-					onClick={(e) => e.stopPropagation()}
-				>
-					<h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-						{analytics ? 'Edit Analytics Record' : 'Create New Analytics Record'}
-					</h2>
-					<form onSubmit={handleSubmit} className="space-y-4">
-						<div>
-							<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-								Course
-							</label>
-							<select
-								value={formData.courseId}
-								onChange={(e) => setFormData(prev => ({ ...prev, courseId: e.target.value }))}
-								className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-								required
-							>
-								<option value="">Select a course</option>
-								{courses.map(course => (
-									<option key={course.id} value={course.id}>{course.title}</option>
-								))}
-							</select>
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Student ID
-								</label>
-								<input
-									type="text"
-									value={formData.studentId}
-									onChange={(e) => setFormData(prev => ({ ...prev, studentId: e.target.value }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Student Name
-								</label>
-								<input
-									type="text"
-									value={formData.studentName}
-									onChange={(e) => setFormData(prev => ({ ...prev, studentName: e.target.value }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Completion Rate (%)
-								</label>
-								<input
-									type="number"
-									min="0"
-									max="100"
-									value={formData.completionRate}
-									onChange={(e) => setFormData(prev => ({ ...prev, completionRate: parseInt(e.target.value) }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Time Spent (minutes)
-								</label>
-								<input
-									type="number"
-									value={formData.timeSpent}
-									onChange={(e) => setFormData(prev => ({ ...prev, timeSpent: parseInt(e.target.value) }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Score (%)
-								</label>
-								<input
-									type="number"
-									min="0"
-									max="100"
-									value={formData.score}
-									onChange={(e) => setFormData(prev => ({ ...prev, score: parseInt(e.target.value) }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-							<div>
-								<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-									Attempts
-								</label>
-								<input
-									type="number"
-									min="1"
-									value={formData.attempts}
-									onChange={(e) => setFormData(prev => ({ ...prev, attempts: parseInt(e.target.value) }))}
-									className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-									required
-								/>
-							</div>
-						</div>
-						<div>
-							<label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-								Status
-							</label>
-							<select
-								value={formData.status}
-								onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'completed' | 'in-progress' | 'not-started' }))}
-								className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-							>
-								<option value="not-started">Not Started</option>
-								<option value="in-progress">In Progress</option>
-								<option value="completed">Completed</option>
-							</select>
-						</div>
-						<div className="flex space-x-3 pt-4">
-							<motion.button
-								type="submit"
-								className={`cursor-pointer flex-1 ${
-									darkMode 
-										? 'bg-gradient-to-br from-[#58CC02] to-[#89E219]' 
-										: 'bg-[#2E6F40]'
-								} text-white py-2 px-4 rounded-lg font-medium`}
-								whileHover={{ scale: 1.02 }}
-								whileTap={{ scale: 0.98 }}
-							>
-								{analytics ? 'Update' : 'Create'}
-							</motion.button>
-							<motion.button
-								type="button"
-								onClick={onCancel}
-								className={`cursor-pointer flex-1 py-2 px-4 rounded-lg font-medium border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-								whileHover={{ scale: 1.02 }}
-								whileTap={{ scale: 0.98 }}
-							>
-								Cancel
-							</motion.button>
-						</div>
-					</form>
-				</motion.div>
-			</motion.div>
-		);
-	};
 
 
 	const handleFooterLink = (url: string) => {
@@ -2702,30 +2668,33 @@ export default function LearningAnalyticsDashboard() {
 
 			{/* Course Modal */}
 			<AnimatePresence>
-				{showCourseModal && (
-					<CourseForm
-						course={editingCourse || undefined}
-						onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
-						onCancel={() => {
-							setShowCourseModal(false);
-							setEditingCourse(null);
-						}}
-					/>
-				)}
+                                {showCourseModal && (
+                                        <CourseForm
+                                                darkMode={darkMode}
+                                                course={editingCourse || undefined}
+                                                onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
+                                                onCancel={() => {
+                                                        setShowCourseModal(false);
+                                                        setEditingCourse(null);
+                                                }}
+                                        />
+                                )}
 			</AnimatePresence>
 
 			{/* Analytics Modal */}
 			<AnimatePresence>
-				{showAnalyticsModal && (
-					<AnalyticsForm
-						analytics={editingAnalytics || undefined}
-						onSubmit={editingAnalytics ? handleUpdateAnalytics : handleCreateAnalytics}
-						onCancel={() => {
-							setShowAnalyticsModal(false);
-							setEditingAnalytics(null);
-						}}
-					/>
-				)}
+                                {showAnalyticsModal && (
+                                        <AnalyticsForm
+                                                darkMode={darkMode}
+                                                courses={courses}
+                                                analytics={editingAnalytics || undefined}
+                                                onSubmit={editingAnalytics ? handleUpdateAnalytics : handleCreateAnalytics}
+                                                onCancel={() => {
+                                                        setShowAnalyticsModal(false);
+                                                        setEditingAnalytics(null);
+                                                }}
+                                        />
+                                )}
 			</AnimatePresence>
 		</div>
 	);
