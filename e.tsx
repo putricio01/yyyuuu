@@ -585,32 +585,7 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: Landing
 );
 
 
-const footerSections = {
-	'Product': [
-		{ name: 'Features', url: '#' },
-		{ name: 'Pricing', url: '#' },
-		{ name: 'Case Studies', url: '#' },
-		{ name: 'Reviews', url: '#' }
-	],
-	'Company': [
-		{ name: 'About', url: '#' },
-		{ name: 'Careers', url: '#' },
-		{ name: 'Partners', url: '#' },
-		{ name: 'Press', url: '#' }
-	],
-	'Resources': [
-		{ name: 'Blog', url: '#' },
-		{ name: 'Documentation', url: '#' },
-		{ name: 'Support', url: '#' },
-		{ name: 'API', url: '#' }
-	],
-        'Legal': [
-                { name: 'Privacy', url: '#' },
-                { name: 'Terms', url: '#' },
-                { name: 'Security', url: '#' },
-                { name: 'Compliance', url: '#' }
-        ]
-};
+const footerSections = {};
 
 interface CourseFormProps {
     darkMode: boolean;
@@ -2331,18 +2306,16 @@ export default function LearningAnalyticsDashboard() {
 											Topic Analytics
 										</h3>
 										<div className="space-y-2">
-											<div className="flex justify-between items-center">
-												<span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completion Time:</span>
-												<span className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-												{userAnalytics[selectedNode].analytics.completionTime}<span className="ml-1">mins</span>
-												</span>
-											</div>
-											<div className="flex justify-between items-center">
-												<span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Assessment Score:</span>
-												<span className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-													{userAnalytics[selectedNode].analytics.assessmentScore}%
-												</span>
-											</div>
+                                                                               <div className="grid grid-cols-2 gap-x-4">
+                                                                               <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completion Time:</span>
+                                                                               <span className={`font-medium text-right ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                                                                               {userAnalytics[selectedNode].analytics.completionTime}<span className="ml-1">mins</span>
+                                                                               </span>
+                                                                               <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Assessment Score:</span>
+                                                                               <span className={`font-medium text-right ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                                                                               {userAnalytics[selectedNode].analytics.assessmentScore}%
+                                                                               </span>
+                                                                               </div>
 											<div className={`mt-4 pt-3 border-t ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
 												<span className={`text-sm block mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Related Resources:</span>
 												<div className="space-y-1">
@@ -2838,18 +2811,7 @@ export default function LearningAnalyticsDashboard() {
 							© {new Date().getFullYear()} EduAnalytics Pro. All rights reserved.
 						</p>
 						<div className="flex items-center space-x-6">
-							<select 
-								className={`text-sm px-3 py-1 rounded-md border ${
-									darkMode 
-										? 'bg-gray-800 border-gray-700 text-gray-300' 
-										: 'bg-white border-gray-300 text-gray-700'
-								} focus:outline-none focus:ring-2 focus:ring-green-500`}
-								onChange={(e) => {
-									addNotification(`Language changed to ${e.target.value}`, 'info');
-								}}
-							>
-								<option value="en">English</option>
-							</select>
+							
 							<button
 								onClick={() => setDarkMode(!darkMode)}
 								className={`p-2 rounded-md transition-colors ${
