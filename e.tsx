@@ -280,16 +280,16 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: Landing
                                         initial={{ opacity: 0, y: 30 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.8, delay: 0.4 }}
-                                       className="text-5xl md:text-7xl font-bold mb-16 leading-snug"
+                                       className="text-5xl md:text-7xl font-bold mb-16 leading-normal"
                                 >
-					<span className={`block ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-						Transform Your
-					</span>
-					<span className={`block ${darkMode 
-						? 'bg-gradient-to-r from-[#58CC02] via-[#89E219] to-[#6BCF02]' 
-						: 'bg-[#2E6F40]'} bg-clip-text text-transparent`}>
-						Learning Journey
-					</span>
+					 <span className={`block ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                Transform Your
+                                        </span>
+                                        <span className={`block pb-1 ${darkMode
+                                                ? 'bg-gradient-to-r from-[#58CC02] via-[#89E219] to-[#6BCF02]'
+                                                : 'bg-[#2E6F40]'} bg-clip-text text-transparent`}>
+                                                Learning Journey
+                                        </span>
 				</motion.h1>
 
 				{/* Subtitle */}
