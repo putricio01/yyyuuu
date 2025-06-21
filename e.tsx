@@ -234,9 +234,19 @@ const getStoredUsers = () => {
 
 // Add function to store new user
 const storeNewUser = (email: string, password: string, name: string) => {
-	const users = getStoredUsers();
-	users.push({ email, password });
-	localStorage.setItem('eduanalytics_users', JSON.stringify(users));
+        const users = getStoredUsers();
+        users.push({ email, password });
+        localStorage.setItem('eduanalytics_users', JSON.stringify(users));
+};
+
+// Update existing user's password
+const updateUserPassword = (email: string, newPassword: string) => {
+        const users = getStoredUsers();
+        const user = users.find((u: { email: string }) => u.email === email);
+        if (user) {
+                user.password = newPassword;
+                localStorage.setItem('eduanalytics_users', JSON.stringify(users));
+        }
 };
 
 interface LandingPageProps {
@@ -321,10 +331,12 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: Landing
 							} text-white rounded-xl font-semibold text-lg shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(46,111,64,0.3)] cursor-pointer overflow-hidden`}
 						whileHover={{ scale: 1.05 }}
 						whileTap={{ scale: 0.98 }}
-						onClick={() => {
-							setShowLoginModal(true);
-							setIsSignUp(true);
-						}}
+                                                onClick={() => {
+                                                        setShowLoginModal(true);
+                                                        setIsSignUp(true);
+                                                        setShowForgotPasswordForm(false);
+                                                        setLoginFailed(false);
+                                                }}
 						style={{
 							borderColor: darkMode ? '#89E219' : '#2E6F40',
 							boxShadow: darkMode ? '0 20px 40px rgba(46, 111, 64, 0.3)' : '0 20px 40px rgba(46, 111, 64, 0.1)'
@@ -358,10 +370,12 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: Landing
 						}`}
 						whileHover={{ scale: 1.05 }}
 						whileTap={{ scale: 0.98 }}
-						onClick={() => {
-							setIsSignUp(false);
-							setShowLoginModal(true);
-						}}
+                                                onClick={() => {
+                                                        setIsSignUp(false);
+                                                        setShowLoginModal(true);
+                                                        setShowForgotPasswordForm(false);
+                                                        setLoginFailed(false);
+                                                }}
 					>
 						<span className="flex items-center">
 							<User className="w-5 h-5 mr-2" />
@@ -552,10 +566,12 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: Landing
 								} text-white rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] cursor-pointer`}
 								whileHover={{ scale: 1.05 }}
 								whileTap={{ scale: 0.95 }}
-								onClick={() => {
-									setShowLoginModal(true);
-									setIsSignUp(true);
-								}}
+                                                                onClick={() => {
+                                                                        setShowLoginModal(true);
+                                                                        setIsSignUp(true);
+                                                                        setShowForgotPasswordForm(false);
+                                                                        setLoginFailed(false);
+                                                                }}
 							>
 								Get Started Now
 							</motion.button>
@@ -935,14 +951,21 @@ export default function LearningAnalyticsDashboard() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [showLoginModal, setShowLoginModal] = useState(false);
 	const [isSignUp, setIsSignUp] = useState(false);
-	const [showPassword, setShowPassword] = useState(false);
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
-	const [confirmPassword, setConfirmPassword] = useState('');
-	const [user, setUser] = useState<User | null>(() => {
-		const storedUser = localStorage.getItem('eduanalytics_user');
-		return storedUser ? JSON.parse(storedUser) : null;
-	});
+        const [showPassword, setShowPassword] = useState(false);
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
+        const [confirmPassword, setConfirmPassword] = useState('');
+        const [loginFailed, setLoginFailed] = useState(false);
+        const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
+        const [newPassword, setNewPassword] = useState('');
+        const [confirmNewPassword, setConfirmNewPassword] = useState('');
+        const [resetPasscode, setResetPasscode] = useState('');
+        const [enteredPasscode, setEnteredPasscode] = useState('');
+        const [forgotPasswordStep, setForgotPasswordStep] = useState<'passcode' | 'newPassword'>('passcode');
+        const [user, setUser] = useState<User | null>(() => {
+                const storedUser = localStorage.getItem('eduanalytics_user');
+                return storedUser ? JSON.parse(storedUser) : null;
+        });
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [showUserMenu, setShowUserMenu] = useState(false);
 	const [showLandingPage, setShowLandingPage] = useState(true);
@@ -1107,20 +1130,26 @@ export default function LearningAnalyticsDashboard() {
 				cred.email === email && cred.password === password
 		);
 
-		if (matchedUser) {
-			const userData = { email, name: email.split('@')[0] };
-			setUser(userData);
-			localStorage.setItem('eduanalytics_user', JSON.stringify(userData));
-			setShowLandingPage(false);
-			setCurrentView('dashboard');
-			setShowLoginModal(false);
-			setEmail('');
-			setPassword('');
-			addNotification('Successfully logged in!', 'success');
-	} else {
-			addNotification('Invalid email or password.', 'error');
-		}
-	};
+                if (matchedUser) {
+                        const userData = { email, name: email.split('@')[0] };
+                        setUser(userData);
+                        localStorage.setItem('eduanalytics_user', JSON.stringify(userData));
+                        setShowLandingPage(false);
+                        setCurrentView('dashboard');
+                        setShowLoginModal(false);
+                        setEmail('');
+                        setPassword('');
+                        setLoginFailed(false);
+                        setShowForgotPasswordForm(false);
+                        setResetPasscode('');
+                        setEnteredPasscode('');
+                        setForgotPasswordStep('passcode');
+                        addNotification('Successfully logged in!', 'success');
+                } else {
+                        addNotification('Invalid email or password.', 'error');
+                        setLoginFailed(true);
+                }
+        };
 
 	const handleSignUp = () => {
 		if (!validateEmail(email)) {
@@ -1157,28 +1186,79 @@ export default function LearningAnalyticsDashboard() {
                 setShowLoginModal(false);
                 setEmail('');
                 setPassword('');
-		setConfirmPassword('');
-		addNotification('Account created successfully!', 'success');
-	};
+                setConfirmPassword('');
+                setResetPasscode('');
+                setEnteredPasscode('');
+                setForgotPasswordStep('passcode');
+                addNotification('Account created successfully!', 'success');
+        };
 
-	const handleLogout = () => {
-		setUser(null);
-		localStorage.removeItem('eduanalytics_user');
-		setShowLandingPage(true);
-		setCurrentView('dashboard');
-		addNotification('Successfully logged out!', 'success');
-	};
+        const handleLogout = () => {
+                setUser(null);
+                localStorage.removeItem('eduanalytics_user');
+                setShowLandingPage(true);
+                setCurrentView('dashboard');
+                setResetPasscode('');
+                setEnteredPasscode('');
+                setForgotPasswordStep('passcode');
+                addNotification('Successfully logged out!', 'success');
+        };
 
-	 const handleForgotPassword = () => {
+        const handleForgotPassword = () => {
                 if (!validateEmail(email)) {
                         addNotification('Please enter a valid email address.', 'error');
                         return;
                 }
 
                 // Simulate sending passcode via email for testing
-                const passcode = '000 000';
-                console.log(`Password reset code ${passcode} sent to ${email}`);
+                const passcode = '000000';
+                setResetPasscode(passcode);
+                setForgotPasswordStep('passcode');
                 addNotification(`Passcode ${passcode} sent to your email`, 'info');
+        };
+
+        const handleResetPassword = () => {
+                if (!validateEmail(email)) {
+                        addNotification('Please enter a valid email address.', 'error');
+                        return;
+                }
+
+                if (forgotPasswordStep === 'passcode') {
+                        if (enteredPasscode !== resetPasscode) {
+                                addNotification('Invalid passcode.', 'error');
+                                return;
+                        }
+
+                        setEnteredPasscode('');
+                        setForgotPasswordStep('newPassword');
+                        addNotification('Passcode verified. Enter a new password.', 'success');
+                        return;
+                }
+
+                if (newPassword.length < 6) {
+                        addNotification('Password must be at least 6 characters long.', 'error');
+                        return;
+                }
+
+                if (newPassword !== confirmNewPassword) {
+                        addNotification('Passwords do not match.', 'error');
+                        return;
+                }
+
+                const users = getStoredUsers();
+                const existingUser = users.find((cred: { email: string }) => cred.email === email);
+
+                if (!existingUser) {
+                        addNotification('No account found with this email.', 'error');
+                        return;
+                }
+
+                updateUserPassword(email, newPassword);
+                addNotification('Password updated. Please log in with your new password.', 'success');
+                setShowForgotPasswordForm(false);
+                setLoginFailed(false);
+                resetAuthForm();
+                setForgotPasswordStep('passcode');
         };
 
 	const getFilteredTopics = useCallback((): CourseTopicNode => {
@@ -1405,10 +1485,12 @@ export default function LearningAnalyticsDashboard() {
 		if (item === 'Home') {
 			setShowLandingPage(true);
 			setCurrentView('dashboard');
-		} else if (!user) {
-			setIsSignUp(false);
-			setShowLoginModal(true);
-		} else {
+                } else if (!user) {
+                        setIsSignUp(false);
+                        setShowLoginModal(true);
+                        setShowForgotPasswordForm(false);
+                        setLoginFailed(false);
+                } else {
 			setShowLandingPage(false);
 			if (item === 'Dashboard') setCurrentView('dashboard');
 			else if (item === 'Courses') setCurrentView('courses');
@@ -1478,18 +1560,26 @@ export default function LearningAnalyticsDashboard() {
 		// Do nothing when footer links are clicked
 	};
 
-	const resetAuthForm = () => {
-		setEmail('');
-		setPassword('');
-		setConfirmPassword('');
-		setShowPassword(false);
-	};
+        const resetAuthForm = () => {
+                setEmail('');
+                setPassword('');
+                setConfirmPassword('');
+                setShowPassword(false);
+                setNewPassword('');
+                setConfirmNewPassword('');
+                setResetPasscode('');
+                setEnteredPasscode('');
+                setForgotPasswordStep('passcode');
+        };
 
 	// Update the modal close handler
-	const handleCloseAuthModal = () => {
-		setShowLoginModal(false);
-		resetAuthForm();
-	};
+        const handleCloseAuthModal = () => {
+                setShowLoginModal(false);
+                resetAuthForm();
+                setLoginFailed(false);
+                setShowForgotPasswordForm(false);
+                setForgotPasswordStep('passcode');
+        };
 
 	// Add useEffect for view changes
 	useEffect(() => {
@@ -1663,14 +1753,18 @@ export default function LearningAnalyticsDashboard() {
 								{isSignUp ? 'Create Account' : 'Welcome Back'}
 							</h2>
 							
-							<form onSubmit={(e) => {
-								e.preventDefault();
-								if(isSignUp)
-									handleSignUp()
-								else handleLogin();
-							}}>
-								<div className="space-y-4">
-									<div>
+                                                        <form onSubmit={(e) => {
+                                                                e.preventDefault();
+                                                                if (isSignUp) {
+                                                                        handleSignUp();
+                                                                } else if (showForgotPasswordForm) {
+                                                                        handleResetPassword();
+                                                                } else {
+                                                                        handleLogin();
+                                                                }
+                                                        }}>
+                                                                <div className="space-y-4">
+                                                                        <div>
 										<label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
 											Email
 										</label>
@@ -1688,34 +1782,89 @@ export default function LearningAnalyticsDashboard() {
 										/>
 									</div>
 									
-									<div>
-										<label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-											Password
-										</label>
-										<div className="relative">
-											<input
-												type={showPassword ? 'text' : 'password'}
-												value={password}
-												onChange={(e) => setPassword(e.target.value)}
-												className={`w-full px-4 py-2 pr-10 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${
-													darkMode 
-														? 'bg-gray-800 border-gray-700 text-white' 
-														: 'bg-white border-gray-300 text-gray-900'
-												}`}
-												placeholder="••••••••"
-												required
-											/>
-											<button
-												type="button"
-												onClick={() => setShowPassword(!showPassword)}
-												className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer ${
-													darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-												}`}
-											>
-												{showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-											</button>
-										</div>
-									</div>
+                                                                        {!showForgotPasswordForm && (
+                                                                                <div>
+                                                                                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                                                                        Password
+                                                                                        </label>
+                                                                                        <div className="relative">
+                                                                                                <input
+                                                                                                        type={showPassword ? 'text' : 'password'}
+                                                                                                        value={password}
+                                                                                                        onChange={(e) => setPassword(e.target.value)}
+                                                                                                        className={`w-full px-4 py-2 pr-10 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                                                                                                                darkMode
+                                                                                                                        ? 'bg-gray-800 border-gray-700 text-white'
+                                                                                                                        : 'bg-white border-gray-300 text-gray-900'
+                                                                                                        }`}
+                                                                                                        placeholder="••••••••"
+                                                                                                        required
+                                                                                                />
+                                                                                                <button
+                                                                                                        type="button"
+                                                                                                        onClick={() => setShowPassword(!showPassword)}
+                                                                                                        className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer ${
+                                                                                                                darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                                                                                                        }`}
+                                                                                                >
+                                                                                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                                                                                </button>
+                                                                                        </div>
+                                                                                </div>
+                                                                        )}
+
+{showForgotPasswordForm && forgotPasswordStep === 'passcode' && (
+        <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Passcode</label>
+                <input
+                        type="text"
+                        value={enteredPasscode}
+                        onChange={(e) => setEnteredPasscode(e.target.value)}
+                        className={`w-full px-4 py-2 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                                darkMode
+                                        ? 'bg-gray-800 border-gray-700 text-white'
+                                        : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                        placeholder="Enter passcode"
+                        required
+                />
+        </div>
+)}
+
+{showForgotPasswordForm && forgotPasswordStep === 'newPassword' && (
+        <>
+                <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>New Password</label>
+                        <input
+                                type={showPassword ? 'text' : 'password'}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className={`w-full px-4 py-2 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                                        darkMode
+                                                ? 'bg-gray-800 border-gray-700 text-white'
+                                                : 'bg-white border-gray-300 text-gray-900'
+                                }`}
+                                placeholder="••••••••"
+                                required
+                        />
+                </div>
+                <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Confirm New Password</label>
+                        <input
+                                type={showPassword ? 'text' : 'password'}
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                className={`w-full px-4 py-2 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                                        darkMode
+                                                ? 'bg-gray-800 border-gray-700 text-white'
+                                                : 'bg-white border-gray-300 text-gray-900'
+                                }`}
+                                placeholder="••••••••"
+                                required
+                        />
+                </div>
+        </>
+)}
 									
 									{isSignUp && (
 										<div>
@@ -1739,32 +1888,53 @@ export default function LearningAnalyticsDashboard() {
 								</div>
 								
 								
-								<motion.button
-									type="submit"
-									className={`w-full mt-6 px-4 py-2 ${
-										darkMode 
-											? 'bg-gradient-to-br from-[#58CC02] to-[#89E219]' 
-											: 'bg-[#2E6F40]'
-									} text-white rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] cursor-pointer`}
-									whileHover={{ scale: 1.02 }}
-									whileTap={{ scale: 0.98 }}
-								>
-									{isSignUp ? 'Create Account' : 'Sign In'}
-								</motion.button>
+                                                                <motion.button
+                                                                        type="submit"
+                                                                        className={`w-full mt-6 px-4 py-2 ${
+                                                                               darkMode
+                                                                               ? 'bg-gradient-to-br from-[#58CC02] to-[#89E219]'
+                                                                               : 'bg-[#2E6F40]'
+                                                                        } text-white rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] cursor-pointer`}
+                                                                        whileHover={{ scale: 1.02 }}
+                                                                        whileTap={{ scale: 0.98 }}
+                                                                >
+                                                                        {isSignUp
+                                                                                ? 'Create Account'
+                                                                                : showForgotPasswordForm
+                                                                                        ? forgotPasswordStep === 'passcode'
+                                                                                                ? 'Verify Passcode'
+                                                                                                : 'Reset Password'
+                                                                                        : 'Sign In'}
+                                                                </motion.button>
 							</form>
 							
-							<div className="mt-6 text-center">
-								<button
-									type="button"
-									onClick={() => {
-										setIsSignUp(!isSignUp);
-										resetAuthForm();
-									}}
-									className={`text-sm cursor-pointer ${darkMode ? 'text-green-400 hover:text-green-300' : 'text-[#2E6F40] hover:text-green-700'}`}
-								>
-									{isSignUp ? 'Already have an account? Log in' : 'Don\'t have an account? Sign up'}
-								</button>
-							</div>
+                                                        <div className="mt-6 flex flex-col items-center text-center space-y-2">
+                                                                {!isSignUp && !showForgotPasswordForm && loginFailed && (
+                                                                        <button
+                                                                                type="button"
+        onClick={() => {
+                handleForgotPassword();
+                setShowForgotPasswordForm(true);
+                setForgotPasswordStep('passcode');
+        }}
+                                                                                className={`text-sm ${darkMode ? 'text-green-400 hover:text-green-300' : 'text-[#2E6F40] hover:text-green-700'}`}
+                                                                        >
+                                                                                Forgot password?
+                                                                        </button>
+                                                                )}
+                                                                <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                                setIsSignUp(!isSignUp);
+                                                                                resetAuthForm();
+                                                                                setShowForgotPasswordForm(false);
+                                                                                setLoginFailed(false);
+                                                                        }}
+                                                                        className={`text-sm cursor-pointer ${darkMode ? 'text-green-400 hover:text-green-300' : 'text-[#2E6F40] hover:text-green-700'}`}
+                                                                >
+                                                                        {isSignUp ? 'Already have an account? Log in' : 'Don\'t have an account? Sign up'}
+                                                                </button>
+                                                        </div>
 							
 							{!isSignUp && (
 								<div className={`mt-6 pt-6 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -1900,10 +2070,12 @@ export default function LearningAnalyticsDashboard() {
 									} text-white rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] cursor-pointer`}
 									whileHover={{ scale: 1.05 }}
 									whileTap={{ scale: 0.95 }}
-									onClick={() => {
-										setIsSignUp(false);
-										setShowLoginModal(true);
-									}}
+                                                                        onClick={() => {
+                                                                               setIsSignUp(false);
+                                                                               setShowLoginModal(true);
+                                                                               setShowForgotPasswordForm(false);
+                                                                               setLoginFailed(false);
+                                                                        }}
 								>
 									Sign In
 								</motion.button>
@@ -1956,6 +2128,10 @@ export default function LearningAnalyticsDashboard() {
 											onClick={() => {
 												handleNavigation(item);
 												setMobileMenuOpen(false);
+                        setShowForgotPasswordForm(false);
+                        setLoginFailed(false);
+                        setShowForgotPasswordForm(false);
+                        setLoginFailed(false);
 											}}
 											className={`block px-3 py-2 cursor-pointer rounded-md text-base font-medium ${
 												(item === 'Home' && showLandingPage) || 
@@ -2004,7 +2180,9 @@ export default function LearningAnalyticsDashboard() {
 											}`}
 											onClick={() => {
 												setShowLoginModal(true);
-												setMobileMenuOpen(false);
+                        setMobileMenuOpen(false);
+                        setShowForgotPasswordForm(false);
+                        setLoginFailed(false);
 											}}
 										>
 											Sign In
