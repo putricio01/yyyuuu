@@ -9,8 +9,6 @@ import {
 	HiFilter as Filter,
 	HiClock as Clock, 
 	HiAcademicCap as Award, 
-	HiLink as Link2,
-	HiMail as Mail,
 	HiSun as Sun, 
 	HiMoon as Moon, 
 	HiUser as User, 
@@ -18,7 +16,6 @@ import {
 	HiEye as Eye, 
 	HiEyeOff as EyeOff, 
 	HiCheck as Check, 
-	HiExclamationCircle as AlertCircle,
 	HiTrendingUp as TrendingUp, 
 	HiUsers as Users, 
 	HiShieldCheck as Shield, 
@@ -84,16 +81,24 @@ interface Course {
 }
 
 interface AnalyticsRecord {
-	id: string;
-	courseId: string;
-	studentId: string;
-	studentName: string;
-	completionRate: number;
-	timeSpent: number;
-	score: number;
-	lastAccessed: Date;
-	attempts: number;
-	status: 'completed' | 'in-progress' | 'not-started';
+        id: string;
+        courseId: string;
+        studentId: string;
+        studentName: string;
+        completionRate: number;
+        timeSpent: number;
+        score: number;
+        lastAccessed: Date;
+        attempts: number;
+        status: 'completed' | 'in-progress' | 'not-started';
+}
+
+function calculateStatus(
+        completionRate: number
+): 'completed' | 'in-progress' | 'not-started' {
+        if (completionRate >= 100) return 'completed';
+        if (completionRate <= 1) return 'not-started';
+        return 'in-progress';
 }
 
 const courseTopics: CourseTopicNode = {
@@ -243,7 +248,7 @@ interface LandingPageProps {
 
 const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: LandingPageProps) => (
 	<div className="min-h-screen">
-		<section className="relative overflow-hidden py-24 px-4 min-h-[90vh] flex items-center">
+		<section className="relative  py-24 px-4 min-h-[90vh] flex items-center">
 			{/* Background gradient effects */}
 			<div className="absolute inset-0 bg-gradient-to-br from-green-50/30 via-transparent to-green-100/20 dark:from-green-900/10 dark:via-transparent dark:to-green-800/5"></div>
 			<div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-green-400/10 to-transparent rounded-full blur-3xl"></div>
@@ -271,12 +276,12 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: Landing
 				</motion.div>
 
 				{/* Main heading with gradient text */}
-				<motion.h1
-					initial={{ opacity: 0, y: 30 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.8, delay: 0.4 }}
-					className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
-				>
+				 <motion.h1
+                                        initial={{ opacity: 0, y: 30 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.8, delay: 0.4 }}
+                                       className="text-5xl md:text-7xl font-bold mb-16 leading-snug"
+                                >
 					<span className={`block ${darkMode ? 'text-white' : 'text-gray-900'}`}>
 						Transform Your
 					</span>
@@ -491,9 +496,8 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: Landing
 				</div>
 			</div>
 		</section>
-
-		  {false && (
-                <section className="py-20 px-4">
+		{!user && (
+		<section className="py-20 px-4">
 			<div className="max-w-6xl mx-auto">
 				<div className="grid md:grid-cols-2 gap-12 items-center">
 					<motion.div
@@ -560,8 +564,8 @@ const LandingPage = ({ darkMode, setShowLoginModal, setIsSignUp, user }: Landing
 				</div>
 			</div>
 		 </section>
-                )}
-	</div>
+		)}
+        </div>
 );
 
 
@@ -692,8 +696,9 @@ const CourseForm: React.FC<CourseFormProps> = ({ darkMode, course, onSubmit, onC
                             <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Duration (minutes)</label>
                             <input
                                 type="number"
+                                min="0"
                                 value={formData.duration}
-                                onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
+                                onChange={(e) => setFormData(prev => ({ ...prev, duration: Math.max(0, parseInt(e.target.value)) }))}
                                 className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                                 required
                             />
@@ -726,8 +731,9 @@ const CourseForm: React.FC<CourseFormProps> = ({ darkMode, course, onSubmit, onC
                         <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Enrollments</label>
                         <input
                             type="number"
+                            min="0"
                             value={formData.enrollments}
-                            onChange={(e) => setFormData(prev => ({ ...prev, enrollments: parseInt(e.target.value) }))}
+                            onChange={(e) => setFormData(prev => ({ ...prev, enrollments: Math.max(0, parseInt(e.target.value)) }))}
                             className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                             required
                         />
@@ -775,15 +781,15 @@ const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analyt
         score: analytics?.score || 0,
         lastAccessed: analytics?.lastAccessed || new Date(),
         attempts: analytics?.attempts || 1,
-        status: analytics?.status || 'not-started' as const
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const status = calculateStatus(formData.completionRate);
         if (analytics) {
-            onSubmit({ ...analytics, ...formData });
+            onSubmit({ ...analytics, ...formData, status });
         } else {
-            onSubmit(formData);
+            onSubmit({ ...formData, status });
         }
     };
 
@@ -863,8 +869,9 @@ const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analyt
                             <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Time Spent (minutes)</label>
                             <input
                                 type="number"
+                                min="0"
                                 value={formData.timeSpent}
-                                onChange={(e) => setFormData(prev => ({ ...prev, timeSpent: parseInt(e.target.value) }))}
+                                onChange={(e) => setFormData(prev => ({ ...prev, timeSpent: Math.max(0, parseInt(e.target.value)) }))}
                                 className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                                 required
                             />
@@ -895,18 +902,7 @@ const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analyt
                             />
                         </div>
                     </div>
-                    <div>
-                        <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status</label>
-                        <select
-                            value={formData.status}
-                            onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'completed' | 'in-progress' | 'not-started' }))}
-                            className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        >
-                            <option value="not-started">Not Started</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                        </select>
-                    </div>
+                    {/* Status is derived from completion rate */}
                     <div className="flex space-x-3 pt-4">
                         <motion.button
                             type="submit"
@@ -1018,8 +1014,8 @@ export default function LearningAnalyticsDashboard() {
 			timeSpent: 120,
 			score: 92,
 			lastAccessed: new Date('2023-05-15'),
-			attempts: 3,
-			status: 'completed' as const,
+                        attempts: 3,
+                        status: 'in-progress' as const,
 		},
 		{
 			id: '2',
@@ -1173,9 +1169,17 @@ export default function LearningAnalyticsDashboard() {
 		addNotification('Successfully logged out!', 'success');
 	};
 
-	const handleForgotPassword = () => {
-		addNotification('Password reset link sent to your email', 'info');
-	};
+	 const handleForgotPassword = () => {
+                if (!validateEmail(email)) {
+                        addNotification('Please enter a valid email address.', 'error');
+                        return;
+                }
+
+                // Simulate sending passcode via email for testing
+                const passcode = '000 000';
+                console.log(`Password reset code ${passcode} sent to ${email}`);
+                addNotification(`Passcode ${passcode} sent to your email`, 'info');
+        };
 
 	const getFilteredTopics = useCallback((): CourseTopicNode => {
 		if (!filters.subject || filters.subject === 'All') {
@@ -1318,33 +1322,41 @@ export default function LearningAnalyticsDashboard() {
 			.attr("class", "node")
 			.attr("transform", d => `translate(${d.y},${d.x})`)
 			.style("cursor", "pointer")
-			.on("mouseover", function(event, d) {
-				setSelectedNode(d.data.id);
-				const rect = svgContainerRef.current?.getBoundingClientRect();
-				if (rect) {
-					const position = { 
-						x: event.clientX - rect.left, 
-						y: event.clientY - rect.top 
-					};
-					setHoverPosition(position);
-				}
-				
-				d3.select(this).select("circle")
-					.transition()
-					.duration(200)
-					.attr("r", 12)
-					.attr("stroke-width", 3);
-			})
-			.on("mouseout", function() {
-				setSelectedNode(null);
-				setHoverPosition(null);
-				
-				d3.select(this).select("circle")
-					.transition()
-					.duration(200)
-					.attr("r", 8)
-					.attr("stroke-width", 2);
-			});
+                        .on("mouseover", function(event, d) {
+                                setSelectedNode(d.data.id);
+                                const rect = svgContainerRef.current?.getBoundingClientRect();
+                                if (rect) {
+                                        const position = {
+                                                x: event.clientX - rect.left,
+                                                y: event.clientY - rect.top
+                                        };
+                                        setHoverPosition(position);
+                                }
+
+                                d3.select(this).select("circle")
+                                        .transition()
+                                        .duration(200)
+                                        .attr("r", 12)
+                                        .attr("stroke-width", 3);
+                                d3.select(this).select("text")
+                                        .transition()
+                                        .duration(200)
+                                        .attr("x", d.children ? -16 : 16);
+                        })
+                        .on("mouseout", function(event, d) {
+                                setSelectedNode(null);
+                                setHoverPosition(null);
+
+                                d3.select(this).select("circle")
+                                        .transition()
+                                        .duration(200)
+                                        .attr("r", 8)
+                                        .attr("stroke-width", 2);
+                                d3.select(this).select("text")
+                                        .transition()
+                                        .duration(200)
+                                        .attr("x", d.children ? -12 : 12);
+                        });
 		
 		node.append("circle")
 			.attr("r", 0)
@@ -1434,24 +1446,26 @@ export default function LearningAnalyticsDashboard() {
 	};
 
 	// CRUD Functions for Analytics
-	const handleCreateAnalytics = (analyticsData: Omit<AnalyticsRecord, 'id'>) => {
-		const newAnalytics: AnalyticsRecord = {
-			...analyticsData,
-			id: Date.now().toString()
-		};
-		setAnalyticsData(prev => [...prev, newAnalytics]);
-		setShowAnalyticsModal(false);
-		addNotification('Analytics record created successfully!', 'success');
-	};
+        const handleCreateAnalytics = (analyticsData: Omit<AnalyticsRecord, 'id'>) => {
+                const newAnalytics: AnalyticsRecord = {
+                        ...analyticsData,
+                        status: calculateStatus(analyticsData.completionRate),
+                        id: Date.now().toString()
+                };
+                setAnalyticsData(prev => [...prev, newAnalytics]);
+                setShowAnalyticsModal(false);
+                addNotification('Analytics record created successfully!', 'success');
+        };
 
-	const handleUpdateAnalytics = (analyticsData: AnalyticsRecord) => {
-		setAnalyticsData(prev => prev.map(record => 
-			record.id === analyticsData.id ? analyticsData : record
-		));
-		setEditingAnalytics(null);
-		setShowAnalyticsModal(false);
-		addNotification('Analytics record updated successfully!', 'success');
-	};
+        const handleUpdateAnalytics = (analyticsData: AnalyticsRecord) => {
+                const updated = { ...analyticsData, status: calculateStatus(analyticsData.completionRate) };
+                setAnalyticsData(prev => prev.map(record =>
+                        record.id === analyticsData.id ? updated : record
+                ));
+                setEditingAnalytics(null);
+                setShowAnalyticsModal(false);
+                addNotification('Analytics record updated successfully!', 'success');
+        };
 
 	const handleDeleteAnalytics = (id: string) => {
 		setAnalyticsData(prev => prev.filter(record => record.id !== id));
@@ -1538,33 +1552,41 @@ export default function LearningAnalyticsDashboard() {
 					.attr("class", "node")
 					.attr("transform", d => `translate(${d.y},${d.x})`)
 					.style("cursor", "pointer")
-					.on("mouseover", function(event, d) {
-						setSelectedNode(d.data.id);
-						const rect = svgContainerRef.current?.getBoundingClientRect();
-						if (rect) {
-							const position = { 
-								x: event.clientX - rect.left, 
-								y: event.clientY - rect.top 
-							};
-							setHoverPosition(position);
-						}
-						
-						d3.select(this).select("circle")
-							.transition()
-							.duration(200)
-							.attr("r", 12)
-							.attr("stroke-width", 3);
-					})
-					.on("mouseout", function() {
-						setSelectedNode(null);
-						setHoverPosition(null);
-						
-						d3.select(this).select("circle")
-							.transition()
-							.duration(200)
-							.attr("r", 8)
-							.attr("stroke-width", 2);
-					});
+                                        .on("mouseover", function(event, d) {
+                                                setSelectedNode(d.data.id);
+                                                const rect = svgContainerRef.current?.getBoundingClientRect();
+                                                if (rect) {
+                                                        const position = {
+                                                                x: event.clientX - rect.left,
+                                                                y: event.clientY - rect.top
+                                                        };
+                                                        setHoverPosition(position);
+                                                }
+
+                                                d3.select(this).select("circle")
+                                                        .transition()
+                                                        .duration(200)
+                                                        .attr("r", 12)
+                                                        .attr("stroke-width", 3);
+                                                d3.select(this).select("text")
+                                                        .transition()
+                                                        .duration(200)
+                                                        .attr("x", d.children ? -16 : 16);
+                                        })
+                                        .on("mouseout", function(event, d) {
+                                                setSelectedNode(null);
+                                                setHoverPosition(null);
+
+                                                d3.select(this).select("circle")
+                                                        .transition()
+                                                        .duration(200)
+                                                        .attr("r", 8)
+                                                        .attr("stroke-width", 2);
+                                                d3.select(this).select("text")
+                                                        .transition()
+                                                        .duration(200)
+                                                        .attr("x", d.children ? -12 : 12);
+                                        });
 				
 				node.append("circle")
 					.attr("r", 0)
@@ -1599,7 +1621,7 @@ export default function LearningAnalyticsDashboard() {
 	return (
 		<div className={`min-h-screen transition-all duration-500 ${darkMode ? 'dark bg-gray-950' : 'bg-gray-50'}`}>
 
-			<div className="fixed top-20 right-4 z-50 space-y-2">
+			<div className="fixed top-20 right-4 z-[100] space-y-2">
 				<AnimatePresence>
 					{notifications.map((notification) => (
 						<motion.div
@@ -2115,18 +2137,18 @@ export default function LearningAnalyticsDashboard() {
 									return selectedNode && hoverPosition && userAnalytics[selectedNode];
 								})() && (
 									<motion.div
-										initial={{ opacity: 0, scale: 0.9 }}
-										animate={{ opacity: 1, scale: 1 }}
-										exit={{ opacity: 0, scale: 0.9 }}
-										className={`absolute w-55 ${darkMode ? 'bg-gray-900' : 'bg-white'} border rounded-xl p-4 shadow-xl`}
-										style={{
-											left: `${Math.min((hoverPosition?.x ?? 0) + 20, window.innerWidth - 320)}px`,
-											top: `${hoverPosition?.y ?? 0}px`,
-											zIndex: 50,
-											borderColor: darkMode ? '#B4B1B1' : '#E5E7EB',
-											boxShadow: darkMode ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.1)'
-										}}
-									>
+									initial={{ opacity: 0, scale: 0.9 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={{ opacity: 0, scale: 0.9 }}
+									className={`absolute w-55 pointer-events-none ${darkMode ? 'bg-gray-900' : 'bg-white'} border rounded-xl p-4 shadow-xl`}
+									style={{
+									left: `${Math.min((hoverPosition?.x ?? 0) + 20, window.innerWidth - 320)}px`,
+									top: `${hoverPosition?.y ?? 0}px`,
+									zIndex: 50,
+									borderColor: darkMode ? '#B4B1B1' : '#E5E7EB',
+									boxShadow: darkMode ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.1)'
+									}}
+							 >
 										<h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
 											Topic Analytics
 										</h3>
