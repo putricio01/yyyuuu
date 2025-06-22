@@ -223,6 +223,12 @@ const userAnalytics: UserAnalytics = {
 
 const subjects = ['All', 'Mathematics', 'Science', 'Physics', 'Biology', 'Algebra', 'Geometry'];
 
+const courseTopicMap: Record<string, string> = {
+        '1': 'linear-equations',
+        '2': 'triangles',
+        '3': 'mechanics'
+};
+
 const mockCredentials = [
 	{ email: 'demo@eduanalytics.com', password: 'demo123' },
 	{ email: 'student@example.com', password: 'student456' }
@@ -781,6 +787,10 @@ const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analyt
         attempts: analytics?.attempts || 1,
     });
 
+    const formatDate = (date: Date) => {
+        return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const status = calculateStatus(formData.completionRate);
@@ -905,7 +915,7 @@ const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analyt
                             <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Start Date</label>
                             <input
                                 type="date"
-                                value={formData.startTime.toISOString().split('T')[0]}
+                                value={formatDate(formData.startTime)}
                                 onChange={(e) => setFormData(prev => ({ ...prev, startTime: new Date(e.target.value) }))}
                                 className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                                 required
@@ -915,7 +925,7 @@ const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analyt
                             <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>End Date</label>
                             <input
                                 type="date"
-                                value={formData.endTime.toISOString().split('T')[0]}
+                                value={formatDate(formData.endTime)}
                                 onChange={(e) => setFormData(prev => ({ ...prev, endTime: new Date(e.target.value) }))}
                                 className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                                 required
@@ -1583,10 +1593,28 @@ export default function LearningAnalyticsDashboard() {
                 addNotification('Analytics record updated successfully!', 'success');
         };
 
-	const handleDeleteAnalytics = (id: string) => {
-		setAnalyticsData(prev => prev.filter(record => record.id !== id));
-		addNotification('Analytics record deleted successfully!', 'success');
-	};
+        const handleDeleteAnalytics = (id: string) => {
+                setAnalyticsData(prev => prev.filter(record => record.id !== id));
+                addNotification('Analytics record deleted successfully!', 'success');
+        };
+
+        useEffect(() => {
+                const updated: UserAnalytics = { ...userAnalyticsMap };
+                analyticsData.forEach(record => {
+                        const topicId = courseTopicMap[record.courseId];
+                        if (topicId) {
+                                updated[topicId] = {
+                                        analytics: {
+                                                completionTime: record.timeSpent,
+                                                assessmentScore: record.score,
+                                                relatedResources: updated[topicId]?.analytics.relatedResources || []
+                                        },
+                                        date: record.endTime
+                                };
+                        }
+                });
+                setUserAnalyticsMap(updated);
+        }, [analyticsData]);
 
 
 
