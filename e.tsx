@@ -88,6 +88,8 @@ interface AnalyticsRecord {
         completionRate: number;
         timeSpent: number;
         score: number;
+        startTime: Date;
+        endTime: Date;
         lastAccessed: Date;
         attempts: number;
         status: 'completed' | 'in-progress' | 'not-started';
@@ -615,7 +617,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ darkMode, course, onSubmit, onC
         }
     };
 
-    return (
+        return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -660,14 +662,17 @@ const CourseForm: React.FC<CourseFormProps> = ({ darkMode, course, onSubmit, onC
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Category</label>
-                            <input
-                                type="text"
+                        <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Category</label>
+                            <select
                                 value={formData.category}
                                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                                 className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                                 required
-                            />
+                            >
+                                {subjects.filter(s => s !== 'All').map(subject => (
+                                    <option key={subject} value={subject}>{subject}</option>
+                                ))}
+                            </select>
                         </div>
                         <div>
                             <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Difficulty</label>
@@ -770,6 +775,8 @@ const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analyt
         completionRate: analytics?.completionRate || 0,
         timeSpent: analytics?.timeSpent || 0,
         score: analytics?.score || 0,
+        startTime: analytics?.startTime || new Date(),
+        endTime: analytics?.endTime || new Date(),
         lastAccessed: analytics?.lastAccessed || new Date(),
         attempts: analytics?.attempts || 1,
     });
@@ -893,6 +900,28 @@ const AnalyticsForm: React.FC<AnalyticsFormProps> = ({ darkMode, courses, analyt
                             />
                         </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Start Date</label>
+                            <input
+                                type="date"
+                                value={formData.startTime.toISOString().split('T')[0]}
+                                onChange={(e) => setFormData(prev => ({ ...prev, startTime: new Date(e.target.value) }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>End Date</label>
+                            <input
+                                type="date"
+                                value={formData.endTime.toISOString().split('T')[0]}
+                                onChange={(e) => setFormData(prev => ({ ...prev, endTime: new Date(e.target.value) }))}
+                                className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                required
+                            />
+                        </div>
+                    </div>
                     {/* Status is derived from completion rate */}
                     <div className="flex space-x-3 pt-4">
                         <motion.button
@@ -941,6 +970,7 @@ export default function LearningAnalyticsDashboard() {
                 const storedUser = localStorage.getItem('eduanalytics_user');
                 return storedUser ? JSON.parse(storedUser) : null;
         });
+        const [userAnalyticsMap, setUserAnalyticsMap] = useState<UserAnalytics>(userAnalytics);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [showUserMenu, setShowUserMenu] = useState(false);
 	const [showLandingPage, setShowLandingPage] = useState(true);
@@ -1003,42 +1033,48 @@ export default function LearningAnalyticsDashboard() {
 	]);
 	
 	const [analyticsData, setAnalyticsData] = useState<AnalyticsRecord[]>([
-		{
-			id: '1',
-			courseId: '1',
-			studentId: 'user-123',
-			studentName: 'John Doe',
-			completionRate: 85,
-			timeSpent: 120,
-			score: 92,
-			lastAccessed: new Date('2023-05-15'),
+                {
+                        id: '1',
+                        courseId: '1',
+                        studentId: 'user-123',
+                        studentName: 'John Doe',
+                        completionRate: 85,
+                        timeSpent: 120,
+                        score: 92,
+                        startTime: new Date('2023-05-01'),
+                        endTime: new Date('2023-05-15'),
+                        lastAccessed: new Date('2023-05-15'),
                         attempts: 3,
                         status: 'in-progress' as const,
-		},
-		{
-			id: '2',
-			courseId: '2',
-			studentId: 'user-456',
-			studentName: 'Jane Smith',
-			completionRate: 67,
-			timeSpent: 95,
-			score: 78,
-			lastAccessed: new Date('2023-05-14'),
-			attempts: 2,
-			status: 'in-progress' as const,
-		},
-		{
-			id: '3',
-			courseId: '3',
-			studentId: 'user-789',
-			studentName: 'Robert Johnson',
-			completionRate: 100,
-			timeSpent: 180,
-			score: 96,
-			lastAccessed: new Date('2023-05-16'),
-			attempts: 1,
-			status: 'completed' as const,
-		},
+                },
+                {
+                        id: '2',
+                        courseId: '2',
+                        studentId: 'user-456',
+                        studentName: 'Jane Smith',
+                        completionRate: 67,
+                        timeSpent: 95,
+                        score: 78,
+                        startTime: new Date('2023-05-05'),
+                        endTime: new Date('2023-05-14'),
+                        lastAccessed: new Date('2023-05-14'),
+                        attempts: 2,
+                        status: 'in-progress' as const,
+                },
+                {
+                        id: '3',
+                        courseId: '3',
+                        studentId: 'user-789',
+                        studentName: 'Robert Johnson',
+                        completionRate: 100,
+                        timeSpent: 180,
+                        score: 96,
+                        startTime: new Date('2023-05-10'),
+                        endTime: new Date('2023-05-16'),
+                        lastAccessed: new Date('2023-05-16'),
+                        attempts: 1,
+                        status: 'completed' as const,
+                },
 	]);
 	
 	const [editingCourse, setEditingCourse] = useState<Course | null>(null);
@@ -1080,13 +1116,35 @@ export default function LearningAnalyticsDashboard() {
 		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 	};
 
-	// Add useEffect for dark mode persistence
-	useEffect(() => {
-		const storedDarkMode = localStorage.getItem('eduanalytics_darkMode');
-		if (storedDarkMode) {
-			setDarkMode(storedDarkMode === 'true');
-		}
-	}, []);
+        // Add useEffect for dark mode persistence
+        useEffect(() => {
+                const storedDarkMode = localStorage.getItem('eduanalytics_darkMode');
+                if (storedDarkMode) {
+                        setDarkMode(storedDarkMode === 'true');
+                }
+        }, []);
+
+        useEffect(() => {
+                if (user) {
+                        const stored = localStorage.getItem(`analytics_${user.email}`);
+                        if (stored) {
+                                const parsed = JSON.parse(stored);
+                                Object.values(parsed).forEach((val: any) => {
+                                        // restore Date objects
+                                        val.date = new Date(val.date);
+                                });
+                                setUserAnalyticsMap(parsed);
+                        } else {
+                                setUserAnalyticsMap(userAnalytics);
+                        }
+                }
+        }, [user]);
+
+        useEffect(() => {
+                if (user) {
+                        localStorage.setItem(`analytics_${user.email}`, JSON.stringify(userAnalyticsMap));
+                }
+        }, [userAnalyticsMap, user]);
 
 	// Update dark mode storage when changed
 	useEffect(() => {
@@ -1257,14 +1315,15 @@ export default function LearningAnalyticsDashboard() {
 		return node || courseTopics;
 	}, [filters.subject]);
 
-	const getFilteredAnalytics = useCallback((): UserAnalytics => {
-		if (!filters.startDate && !filters.endDate) {
-			return userAnalytics;
-		}
+        const getFilteredAnalytics = useCallback((): UserAnalytics => {
+                const source = userAnalyticsMap;
+                if (!filters.startDate && !filters.endDate) {
+                        return source;
+                }
 		
 		const filtered: UserAnalytics = {};
 		
-		Object.entries(userAnalytics).forEach(([id, data]) => {
+                Object.entries(source).forEach(([id, data]) => {
 			const date = data.date;
 			let include = true;
 			
@@ -1282,7 +1341,7 @@ export default function LearningAnalyticsDashboard() {
 		});
 		
 		return filtered;
-	}, [filters.startDate, filters.endDate]);
+        }, [filters.startDate, filters.endDate, userAnalyticsMap]);
 
 	// Course filtering function
 	const getFilteredCourses = useCallback((): Course[] => {
@@ -1430,7 +1489,7 @@ export default function LearningAnalyticsDashboard() {
 			.text(d => d.data.name)
 			.attr("fill", darkMode ? "#FFFFFF" : "#4B4B4B")
 			.attr("font-size", window.innerWidth < 768 ? "10px" : "12px")
-			.attr("font-family", "Inter, sans-serif")
+			.attr("font-family", "IBM Plex Sans, sans-serif")
 			.attr("font-weight", "500")
 			.attr("opacity", 0)
 			.transition()
@@ -1670,7 +1729,7 @@ export default function LearningAnalyticsDashboard() {
 					.text(d => d.data.name)
 					.attr("fill", darkMode ? "#FFFFFF" : "#4B4B4B")
 					.attr("font-size", window.innerWidth < 768 ? "10px" : "12px")
-					.attr("font-family", "Inter, sans-serif")
+					.attr("font-family", "IBM Plex Sans, sans-serif")
 					.attr("font-weight", "500")
 					.attr("opacity", 0)
 					.transition()
@@ -1681,9 +1740,11 @@ export default function LearningAnalyticsDashboard() {
 			
 			return () => clearTimeout(timer);
 		}
-	}, [currentView, showLandingPage, isLoading, darkMode, getFilteredTopics, getFilteredAnalytics]);
+        }, [currentView, showLandingPage, isLoading, darkMode, getFilteredTopics, getFilteredAnalytics]);
 
-	return (
+        const filteredAnalyticsMap = getFilteredAnalytics();
+
+        return (
 		<div className={`min-h-screen transition-all duration-500 ${darkMode ? 'dark bg-gray-950' : 'bg-gray-50'}`}>
 
 			<div className="fixed top-20 right-4 z-[100] space-y-2">
@@ -2286,9 +2347,9 @@ export default function LearningAnalyticsDashboard() {
 							)}
 							
 							<AnimatePresence>
-								{(() => {
-									return selectedNode && hoverPosition && userAnalytics[selectedNode];
-								})() && (
+                                                                {(() => {
+                                                                        return selectedNode && hoverPosition && filteredAnalyticsMap[selectedNode];
+                                                                })() && (
 									<motion.div
 									initial={{ opacity: 0, scale: 0.9 }}
 									animate={{ opacity: 1, scale: 1 }}
@@ -2309,17 +2370,17 @@ export default function LearningAnalyticsDashboard() {
                                                                                <div className="grid grid-cols-2 gap-x-4">
                                                                                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completion Time:</span>
                                                                                <span className={`font-medium text-right ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                                                                               {userAnalytics[selectedNode].analytics.completionTime}<span className="ml-1">mins</span>
+                                                                               {filteredAnalyticsMap[selectedNode].analytics.completionTime}<span className="ml-1">mins</span>
                                                                                </span>
                                                                                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Assessment Score:</span>
                                                                                <span className={`font-medium text-right ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                                                                               {userAnalytics[selectedNode].analytics.assessmentScore}%
+                                                                               {filteredAnalyticsMap[selectedNode].analytics.assessmentScore}%
                                                                                </span>
                                                                                </div>
 											<div className={`mt-4 pt-3 border-t ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
 												<span className={`text-sm block mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Related Resources:</span>
 												<div className="space-y-1">
-													{userAnalytics[selectedNode].analytics.relatedResources.map((resource, index) => (
+                                                                               {filteredAnalyticsMap[selectedNode].analytics.relatedResources.map((resource, index) => (
 														<div
 															key={index}
 															className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
